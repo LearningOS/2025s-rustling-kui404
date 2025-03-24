@@ -3,8 +3,6 @@
 // Execute `rustlings hint threads3` or use the `hint` watch subcommand for a
 // hint.
 
-// I AM NOT DONE
-
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::thread;
@@ -16,6 +14,7 @@ struct Queue {
     second_half: Vec<u32>,
 }
 
+
 impl Queue {
     fn new() -> Self {
         Queue {
@@ -26,30 +25,36 @@ impl Queue {
     }
 }
 
-fn send_tx(q: Queue, tx: mpsc::Sender<u32>) -> () {
-    let qc = Arc::new(q);
-    let qc1 = Arc::clone(&qc);
-    let qc2 = Arc::clone(&qc);
+fn send_tx(q: Queue, tx: mpsc::Sender<u32>){
+    let qc = Arc::new(q);// 使用 Arc 包裹 Queue
+    let qc1 = Arc::clone(&qc);// 克隆 Arc 引用
+    let qc2 = Arc::clone(&qc);// 克隆 Arc 引用
 
-    thread::spawn(move || {
+    let tx1=tx.clone();
+    let tx2=tx.clone();
+    
+
+    let handles1= thread::spawn(move || {
         for val in &qc1.first_half {
             println!("sending {:?}", val);
-            tx.send(*val).unwrap();
-            thread::sleep(Duration::from_secs(1));
+            tx1.send(*val).unwrap();// 发送包裹
+            thread::sleep(Duration::from_secs(1));// 模拟快递员的工作时间
         }
     });
 
-    thread::spawn(move || {
+    let handles2= thread::spawn(move || {
         for val in &qc2.second_half {
             println!("sending {:?}", val);
-            tx.send(*val).unwrap();
-            thread::sleep(Duration::from_secs(1));
+            tx2.send(*val).unwrap();// 发送包裹
+            thread::sleep(Duration::from_secs(1));// 模拟快递员的工作时间
         }
     });
+    handles1.join().unwrap();
+    handles2.join().unwrap();
 }
 
 fn main() {
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = mpsc::channel();// 创建消息通道
     let queue = Queue::new();
     let queue_length = queue.length;
 
@@ -57,10 +62,10 @@ fn main() {
 
     let mut total_received: u32 = 0;
     for received in rx {
-        println!("Got: {}", received);
-        total_received += 1;
+        println!("Got: {}", received);// 收到包裹
+        total_received += 1;// 记录收到的包裹数量
     }
 
     println!("total numbers received: {}", total_received);
-    assert_eq!(total_received, queue_length)
+    assert_eq!(total_received, queue_length)// 确保收到的包裹数量正确
 }
