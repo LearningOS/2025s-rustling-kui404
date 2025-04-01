@@ -2,8 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
-
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -71,15 +69,71 @@ impl<T> LinkedList<T> {
         }
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+    where
+    T:PartialOrd+Copy
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+		// 创建一个新的链表用于存储合并结果
+        let mut merged_list=LinkedList::new();
+        // 定义两个指针，分别指向两个链表的起始节点
+        let mut ptr_a=list_a.start.clone();
+        let mut ptr_b=list_b.start.clone();
+        // 遍历两个链表，按顺序合并点
+        while let (Some(node_a),Some(node_b)) =(&ptr_a,&ptr_b)  {
+            let val_a =unsafe {&node_a.as_ref().val};
+            let val_b =unsafe{&node_b.as_ref().val};
+            if val_a <= val_b {
+                // 将 ptr_a 指向的节点添加到合并链表中
+                let next_a = unsafe { node_a.as_ref().next };
+                merged_list.add_node(ptr_a.unwrap());
+                ptr_a = next_a;
+            } else {
+                // 将 ptr_b 指向的节点添加到合并链表中
+                let next_b = unsafe { node_b.as_ref().next };
+                merged_list.add_node(ptr_b.unwrap());
+                ptr_b = next_b;
+            }
         }
-	}
-}
+
+        // 如果其中一个链表还有剩余节点，直接将其添加到合并链表中
+        while let Some(node_ptr) = ptr_a.take() {
+            let next_a = unsafe { node_ptr.as_ref().next };
+            merged_list.add_node(node_ptr);
+            ptr_a = next_a;
+        }
+
+        while let Some(node_ptr) = ptr_b.take() {
+            let next_b = unsafe { node_ptr.as_ref().next };
+            merged_list.add_node(node_ptr);
+            ptr_b = next_b;
+        }
+
+        // 更新合并链表的长度
+        merged_list.length = list_a.length + list_b.length;
+
+        merged_list
+    }
+
+    /// 添加一个节点到链表末尾
+    fn add_node(&mut self, node_ptr: NonNull<Node<T>>) {
+        match self.end {
+            None => {
+                self.start = Some(node_ptr);
+                self.end = Some(node_ptr);
+            }
+            Some(end_ptr) => unsafe {
+                (*end_ptr.as_ptr()).next = Some(node_ptr);
+                self.end = Some(node_ptr);
+            },
+        }
+    }
+        }
+// 		Self {
+//             length: 0,
+//             start: None,
+//             end: None,
+//         }
+// 	}
+// }
 
 impl<T> Display for LinkedList<T>
 where
@@ -95,7 +149,7 @@ where
 
 impl<T> Display for Node<T>
 where
-    T: Display,
+    T: Display
 {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self.next {
