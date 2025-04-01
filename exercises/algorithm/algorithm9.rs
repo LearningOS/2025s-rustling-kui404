@@ -2,9 +2,9 @@
 	heap
 	This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
+use std::collections::btree_map::Values;
 use std::default::Default;
 
 pub struct Heap<T>
@@ -37,7 +37,9 @@ where
     }
 
     pub fn add(&mut self, value: T) {
-        //TODO
+        self.items.push(value);
+        self.count +=1;
+        self.sift_up(self.count);
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -57,8 +59,36 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let left =self.left_child_idx(idx);
+        let right =self.right_child_idx(idx);
+        if right <= self.count&&(self.comparator)(&self.items[right],&self.items[left]){
+            right
+        }else {
+            left
+        }
+    }
+    fn sift_up(&mut self,mut idx:usize){
+        while idx>1{
+            let parent_idx=self.parent_idx(idx);
+            if(self.comparator)(&self.items[idx],&self.items[parent_idx]){
+                self.items.swap(parent_idx, idx);
+                idx=parent_idx;
+            }else {
+                break;
+            }
+        }
+    }
+    fn sift_down(&mut self){
+        let mut idx=1;
+        while self.children_present(idx){
+            let child_idx=self.smallest_child_idx(idx);
+            if !(self.comparator)(&self.items[idx],&self.items[child_idx]){
+                self.items.swap(idx, child_idx);
+                idx=child_idx;
+            }else {
+                break;
+            }
+        } 
     }
 }
 
@@ -84,8 +114,16 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+    if self.is_empty(){ 
+		return None;
+    }
+    self.items.swap(1, self.count);
+    let value = self.items.pop();
+    self.count-=1;
+    if !self.is_empty(){
+        self.sift_down();
+    }
+    value
     }
 }
 
